@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pycatch22
 
@@ -14,3 +15,10 @@ def compute_catch22(ts, get_only_names=False):
 
 def clean_channel_name(ch):
     return ch.replace("EEG ", "").replace("-REF", "")
+
+
+def make_subdir(idx, output_dir, pad_digits):
+    # Create a subdir named with zero-padded index and return its path.
+    p = os.path.join(output_dir, str(idx).zfill(pad_digits))
+    os.mkdir(p)
+    return p
