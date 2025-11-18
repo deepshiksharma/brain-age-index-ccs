@@ -11,6 +11,7 @@ INPUT_CSV = "../io/inputs/TUH-EEG_selected_data.csv"
 OUTPUT_CSV = "../io/outputs/c22_features.csv"
 START_CROP = 180
 END_CROP = 60
+EPOCH_DURATION = 30.0
 TARGET_SFREQ = 250.0
 TARGET_ELECTRODES = [
     "EEG FP1-REF", "EEG FP2-REF", "EEG F3-REF", "EEG F4-REF",
@@ -27,13 +28,13 @@ clean_channels_names = [clean_channel_name(c) for c in TARGET_ELECTRODES]
 feature_names = compute_catch22(np.random.randn(2000), get_only_names=True)
 
 # Build feature column names
-final_feature_names = []
+final_feature_names = list()
 for ch in clean_channels_names:
     for fn in feature_names:
         final_feature_names.append(f"{ch}_{fn}")
 
 # Initialize master list to hold features computed from each EDF file
-master_list = []
+master_list = list()
 
 
 filelist = pd.read_csv(INPUT_CSV)
@@ -49,7 +50,7 @@ for _, row in filelist.iterrows():
     
     # Get duration
     duration = raw_edf.times[-1]
-    if duration < 270:
+    if duration < (START_CROP + END_CROP + EPOCH_DURATION):
         print(f"\nWARNING: Insufficient seconds: {duration}\nSkipping file: {filepath}\n")
         continue
     
@@ -80,7 +81,7 @@ for _, row in filelist.iterrows():
 
     # Create 30 second epochs
     epochs = mne.make_fixed_length_epochs(
-        edf_selective, duration=30.0,
+        edf_selective, duration=EPOCH_DURATION,
         preload=True, verbose=False
     )
     
