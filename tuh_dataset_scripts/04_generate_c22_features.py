@@ -6,9 +6,9 @@ from  utils import compute_catch22, clean_channel_name
 
 
 # INPUT CSV SHOULD HAVE THESE COLUMNS: [filepath,age,gender]
-INPUT_CSV = "../io/inputs/TUH-EEG_selected_data.csv"
+INPUT_CSV = ""
+OUTPUT_CSV = ""
 
-OUTPUT_CSV = "../io/outputs/c22_features.csv"
 START_CROP = 180
 END_CROP = 60
 EPOCH_DURATION = 30.0
@@ -44,7 +44,12 @@ total_files = len(filelist)
 file_count, epoch_count = 0, 0
 
 for _, row in filelist.iterrows():
+    # update file count
+    file_count += 1
+    
     filepath, age, gender = row['filepath'], row['age'], row['gender']
+    
+    print(f"preprocessing file {file_count}/{total_files}: {filepath}")
 
     raw_edf = mne.io.read_raw_edf(filepath, preload=True, verbose=False)
     
@@ -78,6 +83,8 @@ for _, row in filelist.iterrows():
         continue
     elif  sfreq != TARGET_SFREQ:
         edf_selective.resample(TARGET_SFREQ, npad="auto")
+
+    print(f"file {file_count} preprocessed successfully; proceeding with catch22 feature extraction.")
 
     # Create 30 second epochs
     epochs = mne.make_fixed_length_epochs(
@@ -114,9 +121,8 @@ for _, row in filelist.iterrows():
 
     master_list.append(features_this_iter)
     
-    # update file count and print current status
-    file_count += 1
-    print(f"{file_count}/{total_files} files processed.", end="\r", flush=True)
+    print(f"catch22 features extracted from file {file_count} (epochs extracted: {n_epochs}).")
+    print(f"{file_count}/{total_files} files processed.\n")
 
 
 # Save master_list as csv

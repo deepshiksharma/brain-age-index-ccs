@@ -6,9 +6,9 @@ from utils import make_subdir
 
 
 # INPUT CSV SHOULD HAVE THESE COLUMNS: [filepath,age,gender]
-INPUT_CSV = "train.csv"
+INPUT_CSV = ""
+OUTPUT_DIR = ""
 
-OUTPUT_DIR = "output_dir"
 EPOCHS_PER_SUBDIR = 10_000
 PAD_DIGITS = 8 # padding digits for filename (ex: 00000001)
 
@@ -24,19 +24,23 @@ TARGET_ELECTRODES = [
 ]
 
 
+print(f"INPUT_CSV:  {INPUT_CSV}")
+print(f"OUTPUT_DIR: {OUTPUT_DIR}\n")
+
+filelist = pd.read_csv(INPUT_CSV)
+total_files = len(filelist)
+print(f"Files in input CSV: {total_files}\n")
+
 os.mkdir(OUTPUT_DIR)
 
-file_count, epoch_count = 0, 0
+file_count, epoch_count, saved_npy_count = 0, 0, 0
 subdir_idx, subdir_file_idx = 1, 1
-current_subdir = make_subdir(subdir_idx)
+current_subdir = make_subdir(subdir_idx, OUTPUT_DIR, PAD_DIGITS)
 
 metadata_csv_path = os.path.join(OUTPUT_DIR, "metadata.csv")
 metadata_fp = open(metadata_csv_path, "w", newline="")
 metadata_writer = csv.writer(metadata_fp)
 metadata_writer.writerow(["filepath", "age", "gender"])
-
-filelist = pd.read_csv(INPUT_CSV)
-total_files = len(filelist)
 
 
 for _, row in filelist.iterrows():
@@ -88,19 +92,30 @@ for _, row in filelist.iterrows():
         if subdir_file_idx > EPOCHS_PER_SUBDIR:
             subdir_idx += 1
             subdir_file_idx = 1
-            current_subdir = make_subdir(subdir_idx)
+            current_subdir = make_subdir(subdir_idx, OUTPUT_DIR, PAD_DIGITS)
 
         out_filename = f"{subdir_file_idx:0{PAD_DIGITS}d}.npy"
         out_path = os.path.join(current_subdir, out_filename)
 
-        np.save(out_path, arr.astype(np.float32), allow_pickle=False)
-
+        arr = arr.astype(np.float32)
+        # Apply per-channel Z-score normalization
+        means = arr.mean(axis=1, keepdims=True)
+        stds  = arr.std(axis=1, keepdims=True)
+        stds[stds == 0] = 1.0  # avoid division by zero
+        arr = (arr - means) / stds
+        
+        np.save(out_path, arr, allow_pickle=False)
+        saved_npy_count += 1
+        
         metadata_writer.writerow([os.path.abspath(out_path), age, gender])
 
         subdir_file_idx += 1
-        file_count += 1
+    
+    file_count += 1
+    
+    print(f"{file_count}/{total_files} files processed.", end="\r", flush=True)
 
 
 metadata_fp.close()
-print(f"Done. {file_count} files processed. {subdir_idx} subdirs created.")
-print(f"Total npy files written: {file_count}; total epochs encountered: {epoch_count}")
+print(f"{file_count} files processed. {subdir_idx} subdirs created.")
+print(f"Total npy files written: {saved_npy_count}; total epochs encountered: {epoch_count}")

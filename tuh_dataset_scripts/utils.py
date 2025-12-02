@@ -18,7 +18,6 @@ def clean_channel_name(ch):
 
 
 def make_subdir(idx, output_dir, pad_digits):
-    # Create a subdir named with zero-padded index and return its path.
     p = os.path.join(output_dir, str(idx).zfill(pad_digits))
     os.mkdir(p)
     return p

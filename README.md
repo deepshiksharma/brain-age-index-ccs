@@ -20,8 +20,8 @@ All EDF files from the entire TUH-EEG (Healthy) dataset [[1]] are kept in a fixe
 
 ---
 
-Deepshik Sharma <br>
-Research Trainee *(Jul - Nov 2025)* <br>
+Deepshik Sharma, Siddharth Rajesh <br>
+Research Trainees <br>
 Center for Consciousness Studies <br>
 Department of Neurophysiology, <br>
-NIMHANS, Bangalore, India
+NIMHANS, Bangalore
